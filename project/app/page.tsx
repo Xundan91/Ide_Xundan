@@ -55,7 +55,7 @@ export default function Home() {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required
+                
               />
             </div>
           </CardContent>
