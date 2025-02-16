@@ -18,7 +18,6 @@ export default function SignUp() {
 
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
-    // Add your signup logic here
     router.push("/ide");
   };
 
@@ -42,7 +41,7 @@ export default function SignUp() {
               <Input
                 id="name"
                 type="text"
-                placeholder="John Doe"
+                placeholder="Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -53,7 +52,7 @@ export default function SignUp() {
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -64,21 +63,13 @@ export default function SignUp() {
               <Input
                 id="password"
                 type="password"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </div>
+       
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
             <Button className="w-full" type="submit">

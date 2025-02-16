@@ -7,7 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileIcon, FolderIcon, LayoutPanelLeft, Settings, Terminal } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
+import {defaultCode} from './defaultcode'
 interface Language {
   id: number;
   name: string;
@@ -40,15 +40,7 @@ const languages: Language[] = [
   { id: 74, name: "TypeScript (3.7.4)", extension: "ts" }
 ];
 
-const defaultCode: Record<number, string> = {
-  54: `#include <iostream>
-int main() {
-    std::string input;
-    std::getline(std::cin, input);
-    std::cout << "You entered: " << input << std::endl;
-    return 0;
-}`,
-};
+
 
 export default function IDEPage() {
   const [selectedLanguage, setSelectedLanguage] = useState("54");

@@ -10,16 +10,17 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function Home() {
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const router = useRouter();
 
+  
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Add your authentication logic here
     router.push("/ide");
   };
-
+  
   return (
     <main className="min-h-screen bg-gradient-to-b from-background to-muted flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -40,10 +41,10 @@ export default function Home() {
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="Email@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
+                
               />
             </div>
             <div className="space-y-2">
@@ -51,6 +52,7 @@ export default function Home() {
               <Input
                 id="password"
                 type="password"
+                placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -60,6 +62,9 @@ export default function Home() {
           <CardFooter className="flex flex-col space-y-4">
             <Button className="w-full" type="submit">
               Sign In
+            </Button>
+            <Button  onClick={ () =>router.push("/ide")} className="w-full" >
+                Login as Guest
             </Button>
             <div className="text-sm text-center text-muted-foreground">
               Don&apos;t have an account?{" "}
