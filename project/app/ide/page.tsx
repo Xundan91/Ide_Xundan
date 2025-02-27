@@ -8,46 +8,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileIcon, FolderIcon, LayoutPanelLeft, Settings, Terminal } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {defaultCode} from './defaultcode'
-interface Language {
-  id: number;
-  name: string;
-  extension: string;
-}
+import { languages } from "./languages";
 
-const languages: Language[] = [
-  { id: 45, name: "Assembly (NASM 2.14.02)", extension: "asm" },
-  { id: 46, name: "Bash (5.0.0)", extension: "sh" },
-  { id: 47, name: "Basic (FBC 1.07.1)", extension: "bas" },
-  { id: 48, name: "C (GCC 7.4.0)", extension: "c" },
-  { id: 52, name: "C++ (GCC 7.4.0)", extension: "cpp" },
-  { id: 51, name: "C# (Mono 6.6.0.161)", extension: "cs" },
-  { id: 54, name: "C++ (GCC 9.2.0)", extension: "cpp" },
-  { id: 60, name: "Go (1.13.5)", extension: "go" },
-  { id: 62, name: "Java (OpenJDK 13.0.1)", extension: "java" },
-  { id: 63, name: "JavaScript (Node.js 12.14.0)", extension: "js" },
-  { id: 78, name: "Kotlin (1.3.70)", extension: "kt" },
-  { id: 64, name: "Lua (5.3.5)", extension: "lua" },
-  { id: 79, name: "Objective-C (Clang 7.0.1)", extension: "m" },
-  { id: 65, name: "OCaml (4.09.0)", extension: "ml" },
-  { id: 67, name: "Pascal (FPC 3.0.4)", extension: "pas" },
-  { id: 68, name: "PHP (7.4.1)", extension: "php" },
-  { id: 71, name: "Python (3.8.1)", extension: "py" },
-  { id: 72, name: "Ruby (2.7.0)", extension: "rb" },
-  { id: 73, name: "Rust (1.40.0)", extension: "rs" },
-  { id: 81, name: "Scala (2.13.2)", extension: "scala" },
-  { id: 82, name: "SQL (SQLite 3.27.2)", extension: "sql" },
-  { id: 83, name: "Swift (5.2.3)", extension: "swift" },
-  { id: 74, name: "TypeScript (3.7.4)", extension: "ts" }
-];
+import MonacoEditor from "@monaco-editor/react";
 
 
 
 export default function IDEPage() {
   const [selectedLanguage, setSelectedLanguage] = useState("54");
   const [folderName, setFolderName] = useState("src");
-  const [code, setCode] = useState(defaultCode[54]);
+  const [code, setCode] = useState(defaultCode[parseInt(selectedLanguage)] || "// Write your code here");
   const [output, setOutput] = useState("");
-  const [fileName, setFileName] = useState("main.cpp");
+  const [error ,setError] = useState("");
+  const [fileName, setFileName] = useState("main.js");
+
+
+  const monacoLanguageMap = languages.reduce((acc, lang) => {
+    acc[lang.id] = lang.extension; // Use the existing "extension" field
+    return acc;
+  }, {} as Record<number, string>);
+  
 
   useEffect(() => {
     const savedLanguageId = localStorage.getItem("selectedLanguageId");
@@ -88,21 +68,24 @@ export default function IDEPage() {
 
   const runCode = async () => {
     const headers = {
-      'content-type': 'application/json',
-      'x-rapidapi-host': 'judge0-ce.p.rapidapi.com',
-      'x-rapidapi-key': '78a6e4d3e7msh23a045e979b827cp19bccbjsn1eae786e5061'
+      "content-type": "application/json",
+      "x-rapidapi-host": "judge0-ce.p.rapidapi.com",
+      "x-rapidapi-key": "78a6e4d3e7msh23a045e979b827cp19bccbjsn1eae786e5061",
     };
   
     try {
-      const submitResponse = await fetch('https://judge0-ce.p.rapidapi.com/submissions', {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify({
-          language_id: parseInt(selectedLanguage),
-          source_code: code,
-          stdin: "hello world"
-        })
-      });
+      const submitResponse = await fetch(
+        "https://judge0-ce.p.rapidapi.com/submissions",
+        {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify({
+            language_id: parseInt(selectedLanguage),
+            source_code: code,
+            stdin: "hello world",
+          }),
+        }
+      );
   
       const submitData = await submitResponse.json();
       const token = submitData.token;
@@ -112,32 +95,46 @@ export default function IDEPage() {
       const maxAttempts = 5;
   
       while (attempts < maxAttempts) {
-        const getResultResponse = await fetch(`https://judge0-ce.p.rapidapi.com/submissions/${token}`, {
-          method: 'GET',
-          headers: headers
-        });
+        const getResultResponse = await fetch(
+          `https://judge0-ce.p.rapidapi.com/submissions/${token}`,
+          {
+            method: "GET",
+            headers: headers,
+          }
+        );
   
         resultData = await getResultResponse.json();
   
-        if (resultData.status.id !== 2) { // Not processing
+        if (resultData.status.id !== 2) {
           break;
         }
   
         attempts++;
-        await new Promise(resolve => setTimeout(resolve, 4000)); // Wait for 4 seconds
+        await new Promise((resolve) => setTimeout(resolve, 4000));
       }
   
-      setOutput(resultData.stdout || resultData.stderr || "No output");
+      if (resultData.status.id === 6) {
+        // Compilation Error
+        setError(resultData.compile_output || "Compilation error occurred.");
+        setOutput("");
+      } else if (resultData.stderr) {
+        // Runtime Error
+        setError(resultData.stderr);
+        setOutput("");
+      } else {
+        setOutput(resultData.stdout || "No output");
+        setError(""); // Clear errors if execution is successful
+      }
     } catch (error) {
-      console.error('Error:', error);
-      setOutput("An error occurred while running the code.");
+      console.error("Error:", error);
+      setError("An error occurred while running the code.");
+      setOutput("");
     }
   };
   
 
   return (
     <div className="h-screen flex flex-col">
-      {/* Header */}
       <header className="border-b bg-card">
         <div className="flex items-center justify-between p-2">
           <div className="flex items-center space-x-2">
@@ -196,11 +193,22 @@ export default function IDEPage() {
         <ResizablePanel defaultSize={60}>
           <div className="h-full bg-background">
             <ScrollArea className="h-[calc(100vh-6rem)]">
-              <textarea
-                className="w-full h-full p-4 text-sm font-mono bg-transparent resize-none outline-none"
-                value={code}
-                onChange={handleCodeChange}
-              />
+            <MonacoEditor
+  height="100%"
+language={monacoLanguageMap[parseInt(selectedLanguage) || 54] || "plaintext"}
+  theme="vs-dark"
+  value={code}
+  onChange={(newValue) => setCode(newValue || "")}
+  options={{
+    fontSize: 14,
+    minimap: { enabled: false },
+    automaticLayout: true,
+    suggestOnTriggerCharacters: true,
+    quickSuggestions: { other: true, comments: true, strings: true },
+  }}
+/>
+
+
             </ScrollArea>
           </div>
         </ResizablePanel>
@@ -230,10 +238,14 @@ export default function IDEPage() {
               </ScrollArea>
             </TabsContent>
             <TabsContent value="output" className="h-[calc(100vh-6rem)] border-none p-0">
-              <ScrollArea className="h-full">
-                <pre className="p-4 font-mono text-sm">{output}</pre>
-              </ScrollArea>
-            </TabsContent>
+  <ScrollArea className="h-full">
+    {error ? (
+      <pre className="p-4 font-mono text-sm text-red-500">{error}</pre>
+    ) : (
+      <pre className="p-4 font-mono text-sm">{output}</pre>
+    )}
+  </ScrollArea>
+</TabsContent>
           </Tabs>
         </ResizablePanel>
       </ResizablePanelGroup>
